@@ -33,7 +33,7 @@ internal sealed class ConsulServiceWatcher
         _tag = tag;
         _consulClient = consulClient;
         _serviceDiscoverySettings = serviceDiscoverySettings;
-        _onFailureDelay = TimeSpan.FromSeconds(serviceDiscoverySettings.ConnectionSettings.OnFailureDelaySeconds);
+        _onFailureDelay = TimeSpan.FromSeconds(serviceDiscoverySettings.OnFailureDelaySeconds);
         _logger = loggerFactory.CreateLogger<ConsulServiceWatcher>();
         
         _consulServiceSnapshot = new ConsulServiceSnapshot([], new CancellationChangeToken(_changeTokenSource.Token));
@@ -76,7 +76,12 @@ internal sealed class ConsulServiceWatcher
                     {
                         var address = x.Service.Address;
                         return x.Service.Port > 0 ? $"{address}:{x.Service.Port}" : address;
-                    });
+                    })
+                    .Order()
+                    .ToArray();
+                
+                if (!HaveTheAddressesChanged(addresses))
+                    continue;
                 
                 var hasChangesTokenSource = Interlocked.Exchange(ref _changeTokenSource, new CancellationTokenSource());
                 
@@ -93,7 +98,7 @@ internal sealed class ConsulServiceWatcher
             {
                 break;
             }
-            catch (HttpRequestException e)
+            catch (Exception e)
             {
                 _logger.LogError("An exception occurred while resolving {ServiceName} service addresses via Consul. " + 
                                  "The latest snapshot will be used. " + 
@@ -128,6 +133,9 @@ internal sealed class ConsulServiceWatcher
         
         return queryResultIndex;
     }
+
+    private bool HaveTheAddressesChanged(string[] addresses) 
+        => !addresses.SequenceEqual(_consulServiceSnapshot.Addresses);
 
     public async ValueTask DisposeAsync()
     {

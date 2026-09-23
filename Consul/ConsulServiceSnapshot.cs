@@ -2,4 +2,4 @@
 
 namespace service_discovery.Consul;
 
-public sealed record ConsulServiceSnapshot(IEnumerable<string> Addresses, IChangeToken ChangeToken);
+public sealed record ConsulServiceSnapshot(IReadOnlyCollection<string> Addresses, IChangeToken ChangeToken);
