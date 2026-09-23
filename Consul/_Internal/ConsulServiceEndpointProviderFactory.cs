@@ -17,7 +17,7 @@ internal sealed class ConsulServiceEndpointProviderFactory(
     public bool TryCreateProvider(ServiceEndpointQuery query, [NotNullWhen(true)] out IServiceEndpointProvider? provider)
     {
         var watcher = _watchers.GetOrAdd(query.ServiceName, 
-            _ => new ConsulServiceWatcher(query.ServiceName, null, consulClient, serviceDiscoverySettings, loggerFactory));
+            _ => new ConsulServiceWatcher(query.ServiceName, consulClient, serviceDiscoverySettings, loggerFactory));
         
         provider = new ConsulServiceEndpointProvider(query, watcher, loggerFactory);
         

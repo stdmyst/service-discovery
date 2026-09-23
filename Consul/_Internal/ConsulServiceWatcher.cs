@@ -4,10 +4,9 @@ using Microsoft.Extensions.Primitives;
 
 namespace service_discovery.Consul._Internal;
 
-internal sealed class ConsulServiceWatcher
+internal sealed class ConsulServiceWatcher : IAsyncDisposable
 {
     private readonly string _serviceName;
-    private readonly string? _tag;
     private readonly IConsulClient _consulClient;
     private readonly ConsulServiceDiscoverySettings _serviceDiscoverySettings;
     private readonly TimeSpan _onFailureDelay;
@@ -24,13 +23,11 @@ internal sealed class ConsulServiceWatcher
 
     public ConsulServiceWatcher(
         string serviceName, 
-        string? tag, 
         IConsulClient consulClient, 
         ConsulServiceDiscoverySettings serviceDiscoverySettings,
         ILoggerFactory loggerFactory)
     {
         _serviceName = serviceName;
-        _tag = tag;
         _consulClient = consulClient;
         _serviceDiscoverySettings = serviceDiscoverySettings;
         _onFailureDelay = TimeSpan.FromSeconds(serviceDiscoverySettings.OnFailureDelaySeconds);
@@ -66,7 +63,7 @@ internal sealed class ConsulServiceWatcher
                 };
                 
                 var queryResult = await _consulClient.Health
-                    .Service(_serviceName, _tag, _serviceDiscoverySettings.PassingOnly, queryOptions, _shutdown.Token)
+                    .Service(_serviceName, tag: null, _serviceDiscoverySettings.PassingOnly, queryOptions, _shutdown.Token)
                     .ConfigureAwait(false);
                 
                 trackingIndex = ComputeNewIndex(trackingIndex, queryResult);
