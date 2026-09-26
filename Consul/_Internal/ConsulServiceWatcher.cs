@@ -77,7 +77,7 @@ internal sealed class ConsulServiceWatcher : IAsyncDisposable
                     .Order()
                     .ToArray();
                 
-                if (!HaveTheAddressesChanged(addresses))
+                if (_synchronization.Task.IsCompleted && !HaveTheAddressesChanged(addresses))
                     continue;
                 
                 var hasChangesTokenSource = Interlocked.Exchange(ref _changeTokenSource, new CancellationTokenSource());
